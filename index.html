@@ -726,6 +726,20 @@ function loopTick(){
 function nextQ(){
   clearTimeout(autoT);
   if(!Quiz||Quiz.done) return;
+  // 未提交答案不允许下一题: 已选择但未判定(且非背题)
+  var cur=Quiz.ans[Quiz.i]||[];
+  var hasPick=cur.length&&cur[0]!==-1;
+  var isJudged=Quiz.judged&&Quiz.judged[Quiz.i];
+  if(hasPick&&!isJudged&&!Quiz.opt.recite){
+    document.getElementById('qFb').className='feedback show bad';
+    document.getElementById('qFb').textContent='请先提交答案（点击确认）';
+    return;
+  }
+  if(!hasPick&&!isJudged&&!Quiz.opt.recite){
+    document.getElementById('qFb').className='feedback show bad';
+    document.getElementById('qFb').textContent='请先作答本题';
+    return;
+  }
   if(Quiz.mode==='loop'){
     Quiz.rounds++;
     var due=loopTick();
