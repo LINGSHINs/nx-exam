@@ -1112,10 +1112,6 @@ setTimeout(function(){
   var restored=false;
   try{ restored=restoreSession(); }catch(e){}
   if(restored){ show('vQuiz'); renderQ(); }
-  else{
-    var lv=null; try{ lv=localStorage.getItem('lastView'); }catch(e){}
-    if(lv && views.indexOf(lv)>=0 && lv!=='vQuiz'&&lv!=='vConf') show(lv);
-  }
 },50);
 setSw('swInstant',S.instant); setSw('swInstant2',S.instant);
 setSw('swAuto',S.auto); setSw('swAuto2',S.auto);
