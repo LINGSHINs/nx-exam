@@ -13442,8 +13442,8 @@ function finishQuiz(){
       }
     });
     var rt=document.getElementById('rPct'); if(rt) rt.textContent=score.toFixed(1);
-    var rl=document.getElementById('rRingLbl'); if(rl) rl.textContent='得分 / 95';
-    else { var rv=document.querySelector('.ring'); if(rv && !rv.dataset.lbl){ var d=document.createElement('div'); d.style.fontSize='11px'; d.style.color='var(--tx3)'; d.textContent='满分 95'; rv.appendChild(d); rv.dataset.lbl=1; } }
+    var rl=document.getElementById('rRingLbl'); if(rl) rl.textContent='得分 / 100';
+    else { var rv=document.querySelector('.ring'); if(rv && !rv.dataset.lbl){ var d=document.createElement('div'); d.style.fontSize='11px'; d.style.color='var(--tx3)'; d.textContent='满分 100'; rv.appendChild(d); rv.dataset.lbl=1; } }
   }
   var sg=document.getElementById('rStats');
   sg.innerHTML = statCells([
