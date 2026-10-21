@@ -130,8 +130,9 @@ input,select{font-family:inherit}
 .qcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 18px;box-shadow:var(--shadow)}
 .qtype{display:inline-block;font-size:11px;color:var(--ac2);border:1px solid var(--ac);border-radius:6px;padding:1px 8px;margin-bottom:12px;letter-spacing:.1em}
 .qtext{font-size:17px;font-weight:500;margin-bottom:18px;white-space:pre-wrap;word-break:break-word}
+#qOpts{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
 .opt{display:flex;gap:12px;align-items:flex-start;background:var(--bg2);border:1.5px solid var(--line);
-  border-radius:var(--radius);padding:13px 14px;margin-bottom:10px;transition:.15s;text-align:left;width:100%}
+  border-radius:var(--radius);padding:13px 14px;margin-bottom:0;transition:.15s;text-align:left;width:100%}
 .opt:active{transform:scale(.985)}
 .opt .ol{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--tx3);display:flex;align-items:center;
   justify-content:center;font-size:13px;flex-shrink:0;margin-top:1px;transition:.15s}
@@ -13249,6 +13250,7 @@ function renderQ(){
   var tp=document.getElementById('tinyPct');
   if(tp){ tp.textContent=Math.round(progPct)+'%'; tp.style.left=Math.max(4,Math.min(96,progPct))+'%'; }
   // 标记按钮状态
+  if(Quiz.mode==='exam'){ var fb=document.getElementById('qFinish'); if(fb) fb.textContent='交卷'; }
   var mb=document.getElementById('qMark');
   if(mb){ var isMarked=S.marked.indexOf(q.__id)>=0;
     mb.textContent=isMarked?'★已标':'☆标记';
@@ -13332,6 +13334,7 @@ function judgeMulti(){
   var q=curQ();
   var a=Quiz.ans[Quiz.i]||[];
   if(!a.length) return;
+  if(Quiz.mode==='exam'){ renderQ(); return; } // 考试: 只记录
   Quiz.judged=Quiz.judged||{}; Quiz.judged[Quiz.i]=true;
   var right=sameSet(a,q.ans);
   recAnswer(q,right); recordRound(right); beep(right); buzz(right);
@@ -13379,7 +13382,8 @@ function nextQ(){
   var cur=Quiz.ans[Quiz.i]||[];
   var hasPick=cur.length&&cur[0]!==-1;
   var isJudged=Quiz.judged&&Quiz.judged[Quiz.i];
-  if(hasPick&&!isJudged&&!Quiz.opt.recite){
+  if(Quiz.mode==='exam'){ if(!hasPick){ document.getElementById('qFb').className='feedback show bad'; document.getElementById('qFb').textContent='请先作答本题'; return; } }
+  else if(hasPick&&!isJudged&&!Quiz.opt.recite){
     document.getElementById('qFb').className='feedback show bad';
     document.getElementById('qFb').textContent='请先提交答案（点击确认）';
     return;
@@ -13433,14 +13437,14 @@ function finishQuiz(){
   arc.setAttribute('stroke', pct>=80?'var(--ok)':pct>=60?'var(--ac)':'var(--bad)');
   document.getElementById('rSub').textContent=(MODE_TITLE[Quiz.mode]||'练习')+' · 共 '+tot+' 题'+(Quiz.mode==='loop'?' · '+Quiz.rounds+' 轮':'');
   if(Quiz.mode==='exam'){
-    var score=0;
+    var score=0, er=0, ew=0;
     Quiz.qs.forEach(function(q,i){
-      var w=S.stats[q.__id]||{};
-      var judged=Quiz.judged[i];
-      if(judged && Quiz.ans[i] && sameSet(Quiz.ans[i],q.ans)){
-        score += q.type==='多选题' ? 1.5 : 0.5;
+      if(Quiz.ans[i] && Quiz.ans[i].length){
+        var right=sameSet(Quiz.ans[i],q.ans);
+        if(right){ score += q.type==='多选题' ? 1.5 : 0.5; er++; } else ew++;
       }
     });
+    Quiz.right=er; Quiz.wrongn=ew;
     var rt=document.getElementById('rPct'); if(rt) rt.textContent=score.toFixed(1);
     var rl=document.getElementById('rRingLbl'); if(rl) rl.textContent='得分 / 100';
     else { var rv=document.querySelector('.ring'); if(rv && !rv.dataset.lbl){ var d=document.createElement('div'); d.style.fontSize='11px'; d.style.color='var(--tx3)'; d.textContent='满分 100'; rv.appendChild(d); rv.dataset.lbl=1; } }
@@ -13747,6 +13751,7 @@ document.getElementById('qSubmit').addEventListener('click',function(){
   var a=Quiz.ans[Quiz.i];
   if(!a||!a.length){ return; }
   if(q.type==='多选题'){ judgeMulti(); return; }
+  if(Quiz.mode==='exam'){ renderQ(); return; } // 考试: 只记录, 交卷统一评分
   var right=q.ans[0]===a[0];
   Quiz.judged=Quiz.judged||{}; Quiz.judged[Quiz.i]=true;
   beep(right); buzz(right);
@@ -13755,7 +13760,10 @@ document.getElementById('qSubmit').addEventListener('click',function(){
 });
 document.getElementById('qNext').addEventListener('click',nextQ);
 document.getElementById('qPrev').addEventListener('click',prevQ);
-document.getElementById('qFinish').addEventListener('click',function(){ if(confirm('确定结束本次练习？')) finishQuiz(); });
+document.getElementById('qFinish').addEventListener('click',function(){
+  if(Quiz && Quiz.mode==='exam'){ if(confirm('确定交卷？')) finishQuiz(); }
+  else if(confirm('确定结束本次练习？')) finishQuiz();
+});
 document.getElementById('confRfilter').addEventListener('click',function(e){
   var c=e.target.closest('.chip'); if(!c) return;
   confRfilter=c.dataset.rf;
